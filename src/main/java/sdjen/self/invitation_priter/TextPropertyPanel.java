@@ -25,7 +25,7 @@ import sdjen.self.invitation_priter.ttf.TTF;
 
 public class TextPropertyPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
-	public JTextArea selectTextComp;
+	public Text selectTextComp;
 	public JTextField xTextField;
 	public JTextField yTextField;
 	public JTextField wTextField;
@@ -53,7 +53,7 @@ public class TextPropertyPanel extends JPanel {
 				public void focusLost(FocusEvent e) {
 					if (((JTextField) e.getComponent()).getText().equals(t))
 						return;
-					selectTextComp.setText(((JTextField) e.getComponent()).getText());
+					selectTextComp.setName(((JTextField) e.getComponent()).getText());
 				}
 			}), BorderLayout.NORTH);
 		}
@@ -146,10 +146,10 @@ public class TextPropertyPanel extends JPanel {
 		return result;
 	}
 
-	public void setSelectTextComp(JTextArea component) {
+	public void setSelectTextComp(Text component) {
 		this.selectTextComp = component;
 		Rectangle rectangle = component.getBounds();
-		cTextField.setText(component.getText());
+		cTextField.setText(component.getName());
 		xTextField.setText(String.valueOf(rectangle.x));
 		yTextField.setText(String.valueOf(rectangle.y));
 		wTextField.setText(String.valueOf(rectangle.width));
@@ -171,7 +171,6 @@ public class TextPropertyPanel extends JPanel {
 		final JTextField result = new JTextField();
 		result.setPreferredSize(new Dimension(35, 20));
 		result.setHorizontalAlignment(SwingConstants.RIGHT);
-		// result.setFocusable(false);
 		result.addFocusListener(listener);
 		return result;
 	}

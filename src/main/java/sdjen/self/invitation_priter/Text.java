@@ -1,8 +1,10 @@
 package sdjen.self.invitation_priter;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.FocusAdapter;
@@ -11,11 +13,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JTextArea;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
 
 public abstract class Text extends JTextArea {
 	private static final long serialVersionUID = 1L;
-
+	JLabel label;
+String text;
 	public Text() {
 		addFocusListener(new FocusAdapter() {
 			@Override
@@ -29,8 +36,11 @@ public abstract class Text extends JTextArea {
 				setBorder(BorderFactory.createEmptyBorder());
 			}
 		});
+		setLayout(new BorderLayout());
+		add(getLabel(), BorderLayout.CENTER);
 		setLineWrap(true);
 		setOpaque(false);
+		setEditable(false);
 		MouseAdapter adapter = new MouseAdapter() {
 			// 这两组x和y为鼠标点下时在屏幕的位置和拖动时所在的位置
 			int newX, newY, oldX, oldY;
@@ -104,6 +114,34 @@ public abstract class Text extends JTextArea {
 		};
 		addMouseListener(adapter);
 		addMouseMotionListener(adapter);
+	}
+
+	public JLabel getLabel() {
+		if (null == label)
+			label = new JLabel() {
+				@Override
+				public void setText(String text) {
+					super.setText("<html>" + text + "</html>");
+				}
+			};
+		return label;
+	}
+
+	@Override
+	public void setFont(Font f) {
+		getLabel().setFont(f);
+		super.setFont(f);
+	}
+
+	@Override
+	public void setText(String t) {
+		getLabel().setText(t);
+	}
+
+	@Override
+	public void setName(String name) {
+		setText(name);
+		super.setName(name);
 	}
 
 	protected abstract void refreshStatus(Text comp);

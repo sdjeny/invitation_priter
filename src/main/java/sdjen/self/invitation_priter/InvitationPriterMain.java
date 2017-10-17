@@ -22,7 +22,6 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -35,6 +34,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -50,34 +50,31 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.text.JTextComponent;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jxl.Sheet;
+import jxl.Workbook;
 import sdjen.self.invitation_priter.ttf.TTF;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class InvitationPriterMain extends JFrame {
 	private static final long serialVersionUID = 1L;
-	// static {
-	// try {
-	// UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// }
-	// }
 	private JPanel contentPane;
 	private TextPropertyPanel propertyPanel;
 	private JButton printButton;
 	private JPanel printPanel;
-	// private JPanel panel;
-	private JTable table;
+	private JTable textTable;
+	private JTable loopTable;
 	public JTextField xTextField;
 	public JTextField yTextField;
 	public JTextField wTextField;
 	public JTextField hTextField;
 	public JTextField dTextField;
 	private String jsonFileName = "property.json";
+	private String dataFileName = "data.xls";
 
 	/**
 	 * Launch the application.
@@ -87,9 +84,10 @@ public class InvitationPriterMain extends JFrame {
 			public void run() {
 				try {
 					InvitationPriterMain frame = new InvitationPriterMain();
+					frame.loadData();
 					frame.setVisible(true);
 				} catch (Exception e) {
-					e.printStackTrace();
+					JOptionPane.showMessageDialog(null, e.getMessage());
 				}
 			}
 		});
@@ -101,6 +99,14 @@ public class InvitationPriterMain extends JFrame {
 	 * @throws Exception
 	 */
 	public InvitationPriterMain() throws Exception {
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowOpened(WindowEvent e) {
+				for (Component comp : printPanel.getComponents()) {
+					comp.requestFocus();
+				}
+			}
+		});
 		try {
 			setIconImage(new ImageIcon(
 					getClass().getClassLoader().getResource("sdjen/self/invitation_priter/invitation.png")).getImage());
@@ -119,7 +125,20 @@ public class InvitationPriterMain extends JFrame {
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
 		setContentPane(contentPane);
-		contentPane.add(getPrintPanel(), BorderLayout.CENTER);
+		{
+			contentPane.add(getPrintPanel(), BorderLayout.CENTER);
+		}
+		{
+			JScrollPane scrollPane = new JScrollPane(loopTable = new JTable(new DefaultTableModel()));
+			loopTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+				@Override
+				public void valueChanged(ListSelectionEvent e) {
+					loopTableValueChanged(e);
+				}
+			});
+			scrollPane.setPreferredSize(new Dimension(150, 0));
+			contentPane.add(scrollPane, BorderLayout.EAST);
+		}
 		{
 			JPanel panel = new JPanel();
 			contentPane.add(panel, BorderLayout.SOUTH);
@@ -152,7 +171,7 @@ public class InvitationPriterMain extends JFrame {
 				}
 			}
 			{
-				JScrollPane scrollPane = new JScrollPane(getTable());
+				JScrollPane scrollPane = new JScrollPane(getTextTable());
 				scrollPane.setPreferredSize(new Dimension(0, 0));
 				panel.add(scrollPane, BorderLayout.CENTER);
 			}
@@ -161,6 +180,21 @@ public class InvitationPriterMain extends JFrame {
 			initJson();
 		} catch (Exception e) {
 			e.printStackTrace();// TODO Auto-generated catch block
+		}
+	}
+
+	private void loopTableValueChanged(ListSelectionEvent e) {
+		int row = loopTable.getSelectedRow();
+		DefaultTableModel model = (DefaultTableModel) loopTable.getModel();
+		for (Component comp : printPanel.getComponents()) {
+			if (comp instanceof Text) {
+				Text textComp = (Text) comp;
+				String texts = comp.getName();
+				for (int col = 0; col < model.getColumnCount(); col++)
+					texts = texts.replace(model.getColumnName(col), (String) loopTable.getValueAt(row, col));
+				if (!comp.getName().equals(texts))
+					textComp.setText(texts);
+			}
 		}
 	}
 
@@ -177,9 +211,9 @@ public class InvitationPriterMain extends JFrame {
 		return result;
 	}
 
-	public JTable getTable() {
-		if (null == table) {
-			table = new JTable(new DefaultTableModel(new Object[][] {}, new Object[] { "" }) {
+	public JTable getTextTable() {
+		if (null == textTable) {
+			textTable = new JTable(new DefaultTableModel(new Object[][] {}, new Object[] { "" }) {
 				private static final long serialVersionUID = 1L;
 
 				@Override
@@ -187,7 +221,7 @@ public class InvitationPriterMain extends JFrame {
 					return false;
 				}
 			});
-			TableColumn column = table.getColumnModel().getColumn(0);
+			TableColumn column = textTable.getColumnModel().getColumn(0);
 			// column.setMaxWidth(0);
 			// column.setMinWidth(0);
 			// column.setPreferredWidth(0);
@@ -198,19 +232,19 @@ public class InvitationPriterMain extends JFrame {
 				@Override
 				public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 						boolean hasFocus, int row, int column) {
-					return super.getTableCellRendererComponent(table, ((Text) value).getText(), isSelected, hasFocus,
+					return super.getTableCellRendererComponent(table, ((Text) value).getName(), isSelected, hasFocus,
 							row, column);
 				}
 			});
-			table.setFocusable(false);
-			table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			textTable.setFocusable(false);
+			textTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 				@Override
 				public void valueChanged(ListSelectionEvent e) {
-					if (e.getValueIsAdjusting() && table.getSelectedRow() >= 0)
-						((Text) table.getValueAt(table.getSelectedRow(), 0)).requestFocus();
+					if (e.getValueIsAdjusting() && textTable.getSelectedRow() >= 0)
+						((Text) textTable.getValueAt(textTable.getSelectedRow(), 0)).requestFocus();
 				}
 			});
-			table.addMouseListener(new MouseAdapter() {
+			textTable.addMouseListener(new MouseAdapter() {
 				private JPopupMenu menu;
 
 				private JPopupMenu getMune() {
@@ -226,10 +260,10 @@ public class InvitationPriterMain extends JFrame {
 					result.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							int row = table.getSelectedRow();
-							printPanel.remove((Text) table.getValueAt(row, 0));
+							int row = textTable.getSelectedRow();
+							printPanel.remove((Text) textTable.getValueAt(row, 0));
 							printPanel.repaint();
-							((DefaultTableModel) getTable().getModel()).removeRow(row);
+							((DefaultTableModel) getTextTable().getModel()).removeRow(row);
 						}
 					});
 					return result;
@@ -237,11 +271,11 @@ public class InvitationPriterMain extends JFrame {
 
 				public void mouseClicked(MouseEvent e) {
 					if (SwingUtilities.isRightMouseButton(e))
-						getMune().show(table, e.getX(), e.getY());// 弹出右键菜单
+						getMune().show(textTable, e.getX(), e.getY());// 弹出右键菜单
 				}
 			});
 		}
-		return table;
+		return textTable;
 	}
 
 	public JPanel getPrintPanel() {
@@ -298,7 +332,7 @@ public class InvitationPriterMain extends JFrame {
 		Map<String, Object> property = mapper.readValue(new File(jsonFileName), Map.class);
 		List<Map<String, Object>> textList = (List<Map<String, Object>>) property.get("texts");
 		for (Map<String, Object> map : textList) {
-			JTextArea text = createText((String) map.get("contain"), new BigDecimal(map.get("x").toString()).intValue(),
+			Text text = createText((String) map.get("contain"), new BigDecimal(map.get("x").toString()).intValue(),
 					new BigDecimal(map.get("y").toString()).intValue(),
 					new BigDecimal(map.get("w").toString()).intValue(),
 					new BigDecimal(map.get("h").toString()).intValue());
@@ -324,7 +358,7 @@ public class InvitationPriterMain extends JFrame {
 			if (comp instanceof Text) {
 				Text textComp = (Text) comp;
 				Map<String, Object> textMap = new LinkedHashMap<String, Object>();
-				textMap.put("contain", textComp.getText());
+				textMap.put("contain", textComp.getName());
 				textMap.put("x", textComp.getBounds().getX());
 				textMap.put("y", textComp.getBounds().getY());
 				textMap.put("w", textComp.getBounds().getWidth());
@@ -394,8 +428,35 @@ public class InvitationPriterMain extends JFrame {
 		return printButton;
 	}
 
-	private JTextArea createText(String text, int x, int y, int w, int h) {
-		final JTextArea textArea = new Text() {
+	private void loadData() throws Exception {
+		File file = new File(dataFileName);
+		// 创建一个工作簿
+		Workbook workbook = Workbook.getWorkbook(file);
+		// 获得所有工作表
+		Sheet[] sheets = workbook.getSheets();
+		if (sheets.length < 1) {
+			throw new Exception("无效数据");
+		}
+		Sheet sheet = sheets[0];
+		int rows = sheet.getRows();// 获得行数
+		int cols = sheet.getColumns();// 获得列数
+		// 读取数据
+		DefaultTableModel model = (DefaultTableModel) loopTable.getModel();
+		model.setRowCount(0);
+		model.setColumnCount(0);
+		for (int col = 0; col < cols; col++)
+			model.addColumn(sheet.getCell(col, 0).getContents().trim());
+		for (int row = 1; row < rows; row++) {
+			Object[] rowdata = new Object[cols];
+			for (int col = 0; col < cols; col++)
+				rowdata[col] = sheet.getCell(col, row).getContents().trim();
+			model.addRow(rowdata);
+		}
+		workbook.close();
+	}
+
+	private Text createText(String text, int x, int y, int w, int h) {
+		final Text textArea = new Text() {
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -409,10 +470,11 @@ public class InvitationPriterMain extends JFrame {
 			e.printStackTrace();
 		}
 		// textArea.setEditable(false);
-		textArea.setText(text);
+		textArea.requestFocus();
+		textArea.setName(text);
 		textArea.setBounds(x, y, w, h);
 		printPanel.add(textArea);
-		((DefaultTableModel) getTable().getModel()).addRow(new Object[] { textArea });
+		((DefaultTableModel) getTextTable().getModel()).addRow(new Object[] { textArea });
 		repaint();
 		return textArea;
 	}
