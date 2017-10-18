@@ -1,35 +1,53 @@
 {
   "texts" : [ {
-    "contain" : "内容",
-    "x" : 86.0,
-    "y" : 15.0,
+    "contain" : "${name}\n",
+    "x" : 342.0,
+    "y" : 64.0,
+    "w" : 40.0,
+    "h" : 145.0,
+    "size" : 35,
+    "bold" : true,
+    "italic" : false
+  }, {
+    "contain" : "${appellation}",
+    "x" : 324.0,
+    "y" : 97.0,
+    "w" : 23.0,
+    "h" : 71.0,
+    "size" : 20,
+    "bold" : false,
+    "italic" : false
+  }, {
+    "contain" : "狗日的",
+    "x" : 333.0,
+    "y" : 207.0,
+    "w" : 31.0,
+    "h" : 96.0,
+    "size" : 30,
+    "bold" : false,
+    "italic" : false
+  }, {
+    "contain" : "操",
+    "x" : 333.0,
+    "y" : 22.0,
     "w" : 30.0,
     "h" : 60.0,
     "size" : 30,
     "bold" : false,
     "italic" : false
   }, {
-    "contain" : "33",
-    "x" : 37.0,
-    "y" : 102.0,
-    "w" : 30.0,
-    "h" : 60.0,
-    "size" : 30,
-    "bold" : false,
-    "italic" : false
-  }, {
-    "contain" : "内容",
-    "x" : 253.0,
-    "y" : 197.0,
-    "w" : 30.0,
-    "h" : 60.0,
+    "contain" : "哈容",
+    "x" : 35.0,
+    "y" : 111.0,
+    "w" : 33.0,
+    "h" : 161.0,
     "size" : 30,
     "bold" : false,
     "italic" : false
   } ],
   "x" : 0.0,
   "y" : 0.0,
-  "w" : 574.0,
+  "w" : 424.0,
   "h" : 423.0,
   "d" : 0.0,
   "pw" : 600,

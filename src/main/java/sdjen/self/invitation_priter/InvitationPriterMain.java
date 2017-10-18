@@ -463,6 +463,13 @@ public class InvitationPriterMain extends JFrame {
 			protected void refreshStatus(Text comp) {
 				propertyPanel.setSelectTextComp(comp);
 			}
+
+			@Override
+			public void setName(String name) {
+				if (!name.equals(getName()))
+					textTable.repaint();
+				super.setName(name);
+			}
 		};
 		try {
 			textArea.setFont(TTF.getFont(Font.PLAIN, 30));
@@ -475,7 +482,7 @@ public class InvitationPriterMain extends JFrame {
 		textArea.setBounds(x, y, w, h);
 		printPanel.add(textArea);
 		((DefaultTableModel) getTextTable().getModel()).addRow(new Object[] { textArea });
-		repaint();
+		// repaint();
 		return textArea;
 	}
 }
