@@ -8,6 +8,8 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -31,6 +33,7 @@ import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -75,6 +78,7 @@ public class InvitationPriterMain extends JFrame {
 	public JTextField dTextField;
 	private String jsonFileName = "property.json";
 	private String dataFileName = "data.xls";
+	private PrinterJob printerJob;
 
 	/**
 	 * Launch the application.
@@ -99,6 +103,7 @@ public class InvitationPriterMain extends JFrame {
 	 * @throws Exception
 	 */
 	public InvitationPriterMain() throws Exception {
+		// job.printDialog();
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowOpened(WindowEvent e) {
@@ -111,9 +116,9 @@ public class InvitationPriterMain extends JFrame {
 			setIconImage(new ImageIcon(
 					getClass().getClassLoader().getResource("sdjen/self/invitation_priter/invitation.png")).getImage());
 			try {
-				UIManager.setLookAndFeel("com.sun.java.swing.plaf.mac.MacLookAndFeel");
+				// UIManager.setLookAndFeel("com.sun.java.swing.plaf.mac.MacLookAndFeel");
 			} catch (Exception e) {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+				// UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			}
 		} catch (Exception e2) {
 		}
@@ -145,29 +150,36 @@ public class InvitationPriterMain extends JFrame {
 			panel.setLayout(new BorderLayout(0, 0));
 			{
 				JPanel epanel = new JPanel();
-				epanel.setLayout(new BorderLayout(0, 0));
+				epanel.setLayout(new BorderLayout());
 				panel.add(epanel, BorderLayout.EAST);
 				{
 					epanel.add(propertyPanel = new TextPropertyPanel(), BorderLayout.CENTER);
 					propertyPanel.setBorder(BorderFactory.createTitledBorder("内容属性"));
 				}
 				{
-					JPanel espanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+					JPanel espanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 1));
+					espanel.setBorder(BorderFactory.createEmptyBorder(0, -5, 0, -5));
 					epanel.add(espanel, BorderLayout.EAST);
 					espanel.setBorder(BorderFactory.createTitledBorder("页面设置"));
-					espanel.setPreferredSize(new Dimension(139, 0));
+					espanel.setPreferredSize(new Dimension(150, 0));
 					espanel.add(createLabel(15, "X"));
 					espanel.add(xTextField = createTextField());
-					espanel.add(createLabel(15, "Y"));
-					espanel.add(yTextField = createTextField());
-					espanel.add(createLabel(15, "宽"));
-					espanel.add(wTextField = createTextField());
-					espanel.add(createLabel(15, "高"));
-					espanel.add(hTextField = createTextField());
 					espanel.add(new JLabel("旋转"));
 					espanel.add(dTextField = createTextField());
-					espanel.add(createViewButton());
+					espanel.add(createLabel(15, "Y"));
+					espanel.add(yTextField = createTextField());
 					espanel.add(getPrintButton());
+					espanel.add(createLabel(15, "宽"));
+					espanel.add(wTextField = createTextField());
+					espanel.add(createViewButton());
+					espanel.add(createLabel(15, "高"));
+					espanel.add(hTextField = createTextField());
+					espanel.add(createButton(new JButton("设置"), new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							getPrinterJob().printDialog();
+						}
+					}));
 				}
 			}
 			{
@@ -181,6 +193,13 @@ public class InvitationPriterMain extends JFrame {
 		} catch (Exception e) {
 			e.printStackTrace();// TODO Auto-generated catch block
 		}
+	}
+
+	private JButton createButton(JButton button, ActionListener listener) {
+		button.setMargin(new Insets(0, 0, 0, 0));
+		button.setPreferredSize(new Dimension(70, 22));
+		button.addActionListener(listener);
+		return button;
 	}
 
 	private void loopTableValueChanged(ListSelectionEvent e) {
@@ -299,11 +318,17 @@ public class InvitationPriterMain extends JFrame {
 	}
 
 	private JButton createViewButton() {
-		JButton result = new JButton("预览");
-		result.addActionListener(new ActionListener() {
+		JButton result = createButton(new JButton("预览"), new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				new PreviewDialog(InvitationPriterMain.this).setVisible(true);
+				if (JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(InvitationPriterMain.this, "是否保存当前设置？",
+						"保存设置", JOptionPane.OK_CANCEL_OPTION))
+					try {
+						saveJson();
+					} catch (Exception e2) {
+						e2.printStackTrace();
+					}
 			}
 		});
 		return result;
@@ -339,7 +364,8 @@ public class InvitationPriterMain extends JFrame {
 			int stlye = (Boolean) map.get("bold") ? Font.BOLD : Font.PLAIN;
 			if ((Boolean) map.get("italic"))
 				stlye = stlye | Font.ITALIC;
-			text.setFont(TTF.getFont(stlye, new BigDecimal(map.get("size").toString()).floatValue()));
+			text.setFont(new Font(String.valueOf(map.get("fname")), stlye,
+					new BigDecimal(map.get("size").toString()).intValue()));
 		}
 		xTextField.setText(String.valueOf(property.get("x")));
 		yTextField.setText(String.valueOf(property.get("y")));
@@ -363,9 +389,11 @@ public class InvitationPriterMain extends JFrame {
 				textMap.put("y", textComp.getBounds().getY());
 				textMap.put("w", textComp.getBounds().getWidth());
 				textMap.put("h", textComp.getBounds().getHeight());
-				textMap.put("size", textComp.getFont().getSize());
-				textMap.put("bold", textComp.getFont().isBold());
-				textMap.put("italic", textComp.getFont().isItalic());
+				Font font = textComp.getFont();
+				textMap.put("size", font.getSize());
+				textMap.put("fname", font.getFontName());
+				textMap.put("bold", font.isBold());
+				textMap.put("italic", font.isItalic());
 				textList.add(textMap);
 			}
 		}
@@ -380,16 +408,17 @@ public class InvitationPriterMain extends JFrame {
 		mapper.writerWithDefaultPrettyPrinter().writeValue(new File(jsonFileName), property);
 	}
 
+	public PrinterJob getPrinterJob() {
+		if (null == printerJob) {
+			printerJob = PrinterJob.getPrinterJob();// 获取打印服务对象
+		}
+		return printerJob;
+	}
+
 	private JButton getPrintButton() {
 		if (null == printButton) {
-			printButton = new JButton("打印");
-			printButton.addActionListener(new ActionListener() {
+			printButton = createButton(new JButton("打印"), new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					try {
-						saveJson();
-					} catch (Exception e2) {
-						e2.printStackTrace();
-					}
 					Book book = new Book();// 通俗理解就是书、文档
 					PageFormat pf = new PageFormat();
 					pf.setOrientation(PageFormat.PORTRAIT);// 设置成竖打
@@ -410,15 +439,17 @@ public class InvitationPriterMain extends JFrame {
 							return InvitationPriterMain.this.print(graphics, pageFormat, pageIndex);
 						}
 					}, pf);
-					PrinterJob job = PrinterJob.getPrinterJob();// 获取打印服务对象
-					job.setPageable(book);// 设置打印类
+					getPrinterJob().setPageable(book);// 设置打印类
 					try {
-						boolean a = job.printDialog();// 可以用printDialog显示打印对话框，在用户确认后打印；也可以直接打印
-						if (a) {
-							job.print();
-						} else {
-							job.cancel();
-						}
+						// boolean a = job.printDialog();//
+						// 可以用printDialog显示打印对话框，在用户确认后打印；也可以直接打印
+						// if (a) {
+						getPrinterJob().print();
+						int row = loopTable.getSelectedRow();
+						highlight(loopTable, Math.min(row + 1, loopTable.getRowCount() - 1));
+						// } else {
+						// job.cancel();
+						// }
 					} catch (PrinterException e1) {
 						e1.printStackTrace();
 					}
@@ -453,6 +484,8 @@ public class InvitationPriterMain extends JFrame {
 			model.addRow(rowdata);
 		}
 		workbook.close();
+		if (loopTable.getRowCount() >= 0)
+			highlight(loopTable, 0);
 	}
 
 	private Text createText(String text, int x, int y, int w, int h) {
@@ -484,5 +517,10 @@ public class InvitationPriterMain extends JFrame {
 		((DefaultTableModel) getTextTable().getModel()).addRow(new Object[] { textArea });
 		// repaint();
 		return textArea;
+	}
+
+	private void highlight(JTable table, int row) {
+		table.setRowSelectionInterval(row, row);
+		table.scrollRectToVisible(table.getCellRect(row, 0, true));
 	}
 }

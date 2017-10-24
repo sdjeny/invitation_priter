@@ -1,9 +1,11 @@
 package sdjen.self.invitation_priter;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -13,6 +15,7 @@ import java.awt.event.ItemListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -34,6 +37,7 @@ public class TextPropertyPanel extends JPanel {
 	public JTextField cTextField;
 	public JCheckBox boldCkbx;
 	public JCheckBox italicCkbx;
+	public JComboBox fontComboBox;
 
 	/**
 	 * Create the panel.
@@ -59,7 +63,7 @@ public class TextPropertyPanel extends JPanel {
 		}
 		{
 			JPanel rectanglePanel = new JPanel(new BorderLayout());
-			add(rectanglePanel, BorderLayout.WEST);
+			add(rectanglePanel, BorderLayout.CENTER);
 			rectanglePanel.setBorder(BorderFactory.createEmptyBorder(0, -5, 0, -5));
 			rectanglePanel.setLayout(new FlowLayout(FlowLayout.RIGHT, 5, 1));
 			FocusListener listener = new FocusAdapter() {
@@ -86,41 +90,64 @@ public class TextPropertyPanel extends JPanel {
 			rectanglePanel.add(wTextField = createTextField(listener));
 			rectanglePanel.add(createLabel(15, "高"));
 			rectanglePanel.add(hTextField = createTextField(listener));
-			rectanglePanel.setPreferredSize(new Dimension(60, 85));
 		}
 		{
 			JPanel fontPanel = new JPanel(new BorderLayout());
-			add(fontPanel, BorderLayout.EAST);
-			fontPanel.setBorder(BorderFactory.createEmptyBorder(0, -5, 0, -5));
-			fontPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 1));
-			fontPanel.add(createLabel(30, "字号"));
-			fontPanel.add(sTextField = createTextField(new FocusAdapter() {
-				String t;
+			add(fontPanel, BorderLayout.SOUTH);
+			// fontPanel.setBorder(BorderFactory.createEmptyBorder(0, -5, 0,
+			// -5));
+			{
+				fontPanel.add(
+						fontComboBox = new JComboBox(
+								GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()),
+						BorderLayout.CENTER);
+//				fontComboBox.setPreferredSize(new Dimension(160, 22));
+				fontComboBox.addItemListener(new ItemListener() {
+					@Override
+					public void itemStateChanged(ItemEvent e) {
+						if (e.getStateChange() == ItemEvent.SELECTED)
+							resetFont();
+					}
+				});
+			}
+			{
+				JPanel fontDetPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+				fontDetPanel.setBorder(BorderFactory.createEmptyBorder(0, -5, 0, -5));
+				fontPanel.add(fontDetPanel, BorderLayout.SOUTH);
+				fontDetPanel.add(createLabel(30, "字号"));
+				fontDetPanel.add(sTextField = createTextField(new FocusAdapter() {
+					String t;
 
-				@Override
-				public void focusGained(FocusEvent e) {
-					t = ((JTextField) e.getComponent()).getText();
-				}
+					@Override
+					public void focusGained(FocusEvent e) {
+						t = ((JTextField) e.getComponent()).getText();
+					}
 
-				@Override
-				public void focusLost(FocusEvent e) {
-					if (((JTextField) e.getComponent()).getText().equals(t))
-						return;
-					resetFont();
-				}
-			}));
-			fontPanel.add(boldCkbx = createCheckBox("粗体"));
-			fontPanel.add(italicCkbx = createCheckBox("斜体"));
-			fontPanel.setPreferredSize(new Dimension(70, 85));
+					@Override
+					public void focusLost(FocusEvent e) {
+						if (((JTextField) e.getComponent()).getText().equals(t))
+							return;
+						resetFont();
+					}
+				}));
+				fontDetPanel.add(boldCkbx = createCheckBox("粗体"));
+				fontDetPanel.add(italicCkbx = createCheckBox("斜体"));
+			}
+			 fontPanel.setPreferredSize(new Dimension(0, 50));
 		}
+		// setPreferredSize(new Dimension(160, 150));
 	}
 
 	private void resetFont() {
 		try {
-			int stlye = boldCkbx.isSelected() ? Font.BOLD : Font.PLAIN;
+			Font font = getFont();
+			Double size = Double.valueOf(sTextField.getText());
+			int style = boldCkbx.isSelected() ? Font.BOLD : Font.PLAIN;
 			if (italicCkbx.isSelected())
-				stlye = stlye | Font.ITALIC;
-			selectTextComp.setFont(TTF.getFont(stlye, Float.valueOf(sTextField.getText())));
+				style = style | Font.ITALIC;
+			String fontName = (String) fontComboBox.getSelectedItem();
+			if (0 != font.getSize2D() - size || 0 != style - font.getStyle() || !fontName.equals(font.getFontName()))
+				selectTextComp.setFont(new Font(fontName, style, size.intValue()));
 		} catch (Exception e1) {
 			JOptionPane.showMessageDialog(TextPropertyPanel.this, e1.getMessage());
 		}
@@ -154,9 +181,11 @@ public class TextPropertyPanel extends JPanel {
 		yTextField.setText(String.valueOf(rectangle.y));
 		wTextField.setText(String.valueOf(rectangle.width));
 		hTextField.setText(String.valueOf(rectangle.height));
-		sTextField.setText(String.valueOf(component.getFont().getSize()));
-		boldCkbx.setSelected(component.getFont().isBold());
-		italicCkbx.setSelected(component.getFont().isItalic());
+		Font font = component.getFont();
+		sTextField.setText(String.valueOf(font.getSize()));
+		boldCkbx.setSelected(font.isBold());
+		italicCkbx.setSelected(font.isItalic());
+		fontComboBox.setSelectedItem(font.getFontName());
 	}
 
 	private int toInt(String t) {
