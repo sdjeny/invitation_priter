@@ -117,8 +117,10 @@ public class InvitationPriterMain extends JFrame {
 					getClass().getClassLoader().getResource("sdjen/self/invitation_priter/invitation.png")).getImage());
 			try {
 				// UIManager.setLookAndFeel("com.sun.java.swing.plaf.mac.MacLookAndFeel");
+				UIManager.setLookAndFeel("com.jtattoo.plaf.mcwin.McWinLookAndFeel");
+				// UIManager.setLookAndFeel("com.jtattoo.plaf.acryl.AcrylLookAndFeel");
 			} catch (Exception e) {
-				// UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			}
 		} catch (Exception e2) {
 		}
