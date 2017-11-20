@@ -40,13 +40,13 @@
     "bold" : false,
     "italic" : false
   }, {
-    "contain" : "哈容",
+    "contain" : "dd哈容",
     "x" : 35.0,
     "y" : 111.0,
-    "w" : 33.0,
-    "h" : 161.0,
+    "w" : 130.0,
+    "h" : 43.0,
     "size" : 30,
-    "fname" : "汉仪瘦金书繁",
+    "fname" : "方正瘦金书繁体",
     "bold" : false,
     "italic" : false
   } ],

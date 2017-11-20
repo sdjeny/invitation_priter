@@ -47,6 +47,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -96,7 +97,20 @@ public class InvitationPriterMain extends JFrame {
 			}
 		});
 	}
-
+static {
+	try {
+		// UIManager.setLookAndFeel("com.sun.java.swing.plaf.mac.MacLookAndFeel");
+		UIManager.setLookAndFeel("com.jtattoo.plaf.mcwin.McWinLookAndFeel");
+		// UIManager.setLookAndFeel("com.jtattoo.plaf.acryl.AcrylLookAndFeel");
+	} catch (Exception e) {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+}
 	/**
 	 * Create the frame.
 	 * 
